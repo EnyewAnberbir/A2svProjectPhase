@@ -6,7 +6,7 @@ import (
 	"time"
 	"task_manager/models"
 	"os"
-    
+	
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -20,6 +20,8 @@ func ConnectDB() {
 	if err := godotenv.Load(); err != nil {
         log.Fatalf("Error loading .env file: %v", err)
     }
+
+    // Get the MongoDB URI from the environment variable
     uri := os.Getenv("MONGO_URI")
     if uri == "" {
         log.Fatal("MONGO_URI environment variable not set")
