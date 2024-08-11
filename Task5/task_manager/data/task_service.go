@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/bson"
@@ -20,7 +21,6 @@ func ConnectDB() {
 	if err := godotenv.Load(); err != nil {
         log.Fatalf("Error loading .env file: %v", err)
     }
-
     uri := os.Getenv("MONGO_URI")
     if uri == "" {
         log.Fatal("MONGO_URI environment variable not set")
