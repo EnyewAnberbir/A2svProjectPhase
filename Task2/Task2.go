@@ -20,7 +20,7 @@ func freqCount(input string) map[string]int {
 }
 func IsPalindrome(input string) bool {
 
-	input = strings.ToLower(input)
+	input = strings.ToLower(input)  	
 	re := regexp.MustCompile(`[^\w]`)
 	input = re.ReplaceAllString(input, "")
 

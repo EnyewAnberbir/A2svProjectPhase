@@ -1,56 +1,50 @@
-            Documentation on  Task Management API
+# Task Management API Documentation
 
-Endpoints
+## Endpoints
 
-GET /tasks
+### GET /tasks
 Returns a list of all tasks.
 
-Response:
+**Response:**
+- 200 OK: Returns an array of tasks.
 
-200 OK: Returns an array of tasks.
-GET /tasks/
+### GET /tasks/:id
 Returns the details of a specific task.
 
-Response:
+**Response:**
+- 200 OK: Returns the task object.
+- 400 Bad Request: Invalid task ID.
+- 404 Not Found: Task not found.
 
-200 OK: Returns the task object.
-400 Bad Request: Invalid task ID.
-404 Not Found: Task not found.
-POST /tasks
+### POST /tasks
 Creates a new task.
 
-Request:
+**Request:**
+- JSON body with title, description, due_date, and status.
 
-JSON body with the following fields:
-title (string, required)
-description (string, optional)
-due_date (string, optional, date in ISO 8601 format)
-status (string, optional, one of "pending", "in-progress", "completed")
-Response:
+**Response:**
+- 201 Created: Returns the created task object.
+- 400 Bad Request: Invalid request payload.
 
-201 Created: Returns the created task object.
-400 Bad Request: Invalid request payload.
-PUT /tasks/
+### PUT /tasks/:id
 Updates a specific task.
 
-Request:
+**Request:**
+- JSON body with title, description, due_date, and status.
 
-JSON body with the following fields:
-title (string, optional)
-description (string, optional)
-due_date (string, optional, date in ISO 8601 format)
-status (string, optional, one of "pending", "in-progress", "completed")
-Response:
+**Response:**
+- 200 OK: Returns the updated task object.
+- 400 Bad Request: Invalid task ID or request payload.
+- 404 Not Found: Task not found.
 
-200 OK: Returns the updated task object.
-400 Bad Request: Invalid task ID or request payload.
-404 Not Found: Task not found.
-DELETE /tasks/
+### DELETE /tasks/:id
 Deletes a specific task.
 
-Response:
+**Response:**
+- 204 No Content: Task deleted successfully.
+- 400 Bad Request: Invalid task ID.
+- 404 Not Found: Task not found.
 
-204 No Content: Task deleted successfully.
-400 Bad Request: Invalid task ID.
-404 Not Found: Task not found.
+api documentation : follow the link below:
 
+#### https://documenter.getpostman.com/view/37611141/2sA3s3JBWo

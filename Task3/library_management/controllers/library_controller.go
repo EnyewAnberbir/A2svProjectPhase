@@ -87,7 +87,6 @@ func StartLibrarySystem() {
             fmt.Print("Enter member ID: ")
             scanner.Scan()
             memberID, _ := strconv.Atoi(scanner.Text())
-
             err := library.ReturnBook(bookID, memberID)
             if err != nil {
                 fmt.Println("Error:", err)
