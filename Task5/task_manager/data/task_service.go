@@ -15,7 +15,7 @@ import (
 var taskCollection *mongo.Collection
 
 func ConnectDB() {
-	uri := "mongodb+srv://enyew:enyew@database.gl3phpg.mongodb.net/taskmanagement?retryWrites=true&w=majority&appName=database"
+	uri := "mongodb url"
 	clientOptions := options.Client().ApplyURI(uri)
 	client, err := mongo.NewClient(clientOptions)
 	if err != nil {
