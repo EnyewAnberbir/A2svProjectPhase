@@ -6,6 +6,9 @@ import (
 	"log"
 	"time"
 	"task_manager/models"
+	"os"
+
+	"github.com/joho/godotenv"
 
 	"golang.org/x/crypto/bcrypt"
 	"go.mongodb.org/mongo-driver/bson"
@@ -17,7 +20,13 @@ import (
 var userCollection *mongo.Collection
 
 func ConnectUserDB() {
-	uri := "mongodb+srv://enyew:enyew@database.gl3phpg.mongodb.net/usermanagement?retryWrites=true&w=majority&appName=database"
+	if err := godotenv.Load(); err != nil {
+        log.Fatalf("Error loading .env file: %v", err)
+	    }
+        uri := os.Getenv("MONGO_URI")
+        if uri == "" {
+	    log.Fatal("MONGO_URI environment variable not set")
+    }
 	clientOptions := options.Client().ApplyURI(uri)
 	client, err := mongo.NewClient(clientOptions)
 	if err != nil {
