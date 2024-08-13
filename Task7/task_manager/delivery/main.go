@@ -14,7 +14,7 @@ import (
 
 func main() {
 
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://enyew:enyew@database.gl3phpg.mongodb.net/newtaskmanagement?retryWrites=true&w=majority&appName=database"))
+	client, err := mongo.NewClient(options.Client().ApplyURI("Mongo URI"))
 	if err != nil {
 		log.Fatal(err)
 	}
