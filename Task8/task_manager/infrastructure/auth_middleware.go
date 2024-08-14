@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/EnyewAnberbir/task_manager/Task7/utils"
+	"github.com/EnyewAnberbir/task_manager/task7/utils"
 )
 
 
