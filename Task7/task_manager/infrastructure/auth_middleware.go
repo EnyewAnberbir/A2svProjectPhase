@@ -1,65 +1,61 @@
-package infrastructure
+package usecases
 
 import (
-	"net/http"
-	"strings"
+	"context"
+	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/dgrijalva/jwt-go"
+	
+	"github.com/EnyewAnberbir/task_manager/Task7/models"
+	
 )
 
-type JWTAuthMiddleware struct {
-	jwtService JWTService
+type taskUsecase struct {
+	taskRepository models.TaskRepository 
+	timeOut time.Duration 
 }
 
-func NewJWTAuthMiddleware(jwtService JWTService) *JWTAuthMiddleware {
-	return &JWTAuthMiddleware{jwtService: jwtService}
-}
 
-func (j *JWTAuthMiddleware) AuthenticateJWT() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
-			c.Abort()
-			return
-		}
-
-		if !strings.HasPrefix(authHeader, "Bearer ") {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization header format"})
-			c.Abort()
-			return
-		}
-
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		token, err := j.jwtService.ValidateToken(tokenString)
-		if err != nil || !token.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-			c.Abort()
-			return
-		}
-
-		claims, ok := token.Claims.(jwt.MapClaims)
-		if !ok {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
-			c.Abort()
-			return
-		}
-
-		c.Set("userID", claims["sub"].(string))
-		c.Set("role", claims["role"].(string))
-		c.Next()
+func NewTaskUsecase(tasRepository models.TaskRepository, timeOut time.Duration) *taskUsecase {
+	return &taskUsecase{
+		taskRepository: tasRepository,
+		timeOut: timeOut,
+	
 	}
 }
 
-func (j *JWTAuthMiddleware) AuthorizeAdmin() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		role, exists := c.Get("role")
-		if !exists || role != "admin" {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Admin access required"})
-			c.Abort()
-			return
-		}
-		c.Next()
-	}
+func(t taskUsecase) Fetch(ctx context.Context) ([]models.Task, error){
+	ctx, cancel := context.WithTimeout(ctx, t.timeOut)
+	defer cancel()
+	return t.taskRepository.FetchTasks(ctx)
+}
+
+func(t taskUsecase) Find(ctx context.Context, id int)  (models.Task, error){
+	ctx, cancel := context.WithTimeout(ctx, t.timeOut)
+	defer cancel()
+	return t.taskRepository.FindTask(ctx, id)
+
+}
+
+
+func(t taskUsecase) Update(ctx context.Context, id int ,title string) (models.Task, error){
+	ctx, cancel := context.WithTimeout(ctx, t.timeOut)
+	defer cancel()
+	return t.taskRepository.UpdateTask(ctx, id , title)
+
+}
+
+
+func(t taskUsecase) Delete(ctx context.Context, id int) (error){
+	ctx, cancel := context.WithTimeout(ctx, t.timeOut)
+	defer cancel()
+	return t.taskRepository.DeleteTask(ctx, id)
+
+}
+
+
+func(t taskUsecase) Create(ctx context.Context, task models.Task)(models.Task, error) {
+	ctx, cancel := context.WithTimeout(ctx, t.timeOut)
+	defer cancel()
+	return t.taskRepository.InsertTask(ctx, task)
+
 }

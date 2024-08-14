@@ -1,71 +1,99 @@
-package repositories
+package repository
 
 import (
 	"context"
-	"task_manager/domain"
+	"errors"
+	"log"
 
+	"github.com/EnyewAnberbir/task_manager/Task7/models"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type TaskRepository interface {
-	CreateTask(task domain.Task) (domain.Task, error)
-	UpdateTask(id string, task domain.Task) (domain.Task, error)
-	DeleteTask(id string) error
-	GetTasks() ([]domain.Task, error)
-	GetTaskByID(id string) (domain.Task, error)
-}
-
 type taskRepository struct {
-	db *mongo.Collection
+	database   mongo.Database
+	collection string
 }
 
-func NewTaskRepository(db *mongo.Collection) TaskRepository {
-	return &taskRepository{db}
+func NewTaskRepository(db mongo.Database, collection string) models.TaskRepository {
+	return &taskRepository{
+		database:   db,
+		collection: collection,
+	}
 }
 
-func (r *taskRepository) CreateTask(task domain.Task) (domain.Task, error) {
-	task.ID = primitive.NewObjectID()
-	task.Status = "Pending"
-	_, err := r.db.InsertOne(context.Background(), task)
-	return task, err
-}
+func (t *taskRepository) FetchTasks(ctx context.Context) ([]models.Task, error) {
 
-func (r *taskRepository) UpdateTask(id string, task domain.Task) (domain.Task, error) {
-	oid, _ := primitive.ObjectIDFromHex(id)
-	filter := bson.M{"_id": oid}
-	update := bson.M{"$set": task}
-	_, err := r.db.UpdateOne(context.Background(), filter, update)
-	return task, err
-}
+	taskCollection := t.database.Collection(t.collection)
+	cursor, err := taskCollection.Find(context.TODO(), bson.D{})
 
-func (r *taskRepository) DeleteTask(id string) error {
-	oid, _ := primitive.ObjectIDFromHex(id)
-	_, err := r.db.DeleteOne(context.Background(), bson.M{"_id": oid})
-	return err
-}
-
-func (r *taskRepository) GetTasks() ([]domain.Task, error) {
-	var tasks []domain.Task
-	cursor, err := r.db.Find(context.Background(), bson.D{})
 	if err != nil {
 		return nil, err
 	}
-	defer cursor.Close(context.Background())
-	for cursor.Next(context.Background()) {
-		var task domain.Task
-		if err := cursor.Decode(&task); err != nil {
-			return nil, err
-		}
-		tasks = append(tasks, task)
+	defer cursor.Close(context.TODO())
+
+	var tasks []models.Task
+
+	if err := cursor.All(context.TODO(), &tasks); err != nil {
+		return nil, err
 	}
+
 	return tasks, nil
+
 }
 
-func (r *taskRepository) GetTaskByID(id string) (domain.Task, error) {
-	oid, _ := primitive.ObjectIDFromHex(id)
-	var task domain.Task
-	err := r.db.FindOne(context.Background(), bson.M{"_id": oid}).Decode(&task)
-	return task, err
+func (t *taskRepository) FindTask(ctx context.Context, id int) (models.Task, error) {
+
+	filter := bson.D{{Key: "id", Value: id}}
+	taskCollection := t.database.Collection(t.collection)
+	var task models.Task
+	err := taskCollection.FindOne(context.TODO(), filter).Decode(&task)
+
+	if err != nil {
+		return task, errors.New("failed to load Data")
+	}
+
+	return task, nil
+
+}
+
+func (t *taskRepository) UpdateTask(ctx context.Context, id int, title string) (models.Task, error) {
+
+	taskCollection := t.database.Collection(t.collection)
+	filter := bson.D{{Key: "id", Value: id}}
+	update := bson.D{{Key: "$set", Value: bson.D{{Key: "title", Value: title}}}}
+
+	_, err := taskCollection.UpdateOne(context.TODO(), filter, update)
+	task := models.Task{Id: id, Title: title}
+
+	if err != nil {
+		return task, errors.New("failed to load Data")
+	}
+	return task, nil
+}
+
+func (t *taskRepository) DeleteTask(ctx context.Context, id int) error {
+	taskCollection := t.database.Collection(t.collection)
+	filter := bson.D{{Key: "id", Value: id}}
+
+	_, err := taskCollection.DeleteOne(context.TODO(), filter)
+	if err != nil {
+		return errors.New("failed to load Data")
+	}
+	return nil
+
+}
+
+func (t *taskRepository) InsertTask(ctx context.Context, task models.Task) (models.Task, error) {
+
+	taskCollection := t.database.Collection(t.collection)
+
+	_, err := taskCollection.InsertOne(context.TODO(), task)
+	if err != nil {
+		log.Printf("task not creatd")
+		return task, errors.New("failed to load Data")
+	}
+
+	return task, nil
+
 }

@@ -1,33 +1,71 @@
 package routers
 
 import (
-	"task_manager/delivery/controllers"
-	"task_manager/infrastructure"
-	"task_manager/usecases"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/EnyewAnberbir/task_manager/Task7/controllers"
+	"github.com/EnyewAnberbir/task_manager/Task7/middleware"
+	"github.com/EnyewAnberbir/task_manager/Task7/repository"
+	"github.com/EnyewAnberbir/task_manager/Task7/usecases"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func SetupRouter(r *gin.Engine, taskUseCase usecases.TaskUseCase, userUseCase usecases.UserUseCase, jwtService infrastructure.JWTService) {
-	taskController := controllers.NewTaskController(taskUseCase)
-	userController := controllers.NewUserController(userUseCase)
-	authMiddleware := infrastructure.NewJWTAuthMiddleware(jwtService)
+func NewUserRouter(timeout time.Duration, db *mongo.Database, group *gin.RouterGroup) {
+    userRepo := repository.NewUserRepository(*db, "user")
+    userUsecase := usecases.NewUserUsecase(userRepo, timeout)
+    userController := &controllers.UserController{
+        UserUsecase: userUsecase,
+    }
 
-	api := r.Group("/api")
-	{
-		api.POST("/register", userController.RegisterUser)
-		api.POST("/login", userController.LoginUser)
+    group.POST("/register", userController.SignUp)
+    group.POST("/login", userController.Login)
+}
 
-		protected := api.Group("/")
-		protected.Use(authMiddleware.AuthenticateJWT())
-		{
-			protected.POST("/tasks", taskController.CreateTask)
-			protected.GET("/tasks", taskController.GetTasks)
-			protected.GET("/tasks/:id", taskController.GetTaskByID)
-			protected.PUT("/tasks/:id", taskController.UpdateTask)
-			protected.DELETE("/tasks/:id", taskController.DeleteTask)
+func NewTaskRouter(timeout time.Duration, db mongo.Database, group *gin.RouterGroup) {
+    taskRepo := repository.NewTaskRepository(db, "task")
+    taskUsecase := usecases.NewTaskUsecase(taskRepo, timeout)
+    taskController := &controllers.TaskController{
+        TaskUsecase: taskUsecase,
+    }
 
-			protected.PUT("/users/:id/promote", authMiddleware.AuthorizeAdmin(), userController.PromoteUser)
-		}
-	}
+    group.GET("/tasks/:id", taskController.GetTaskHandler)
+    group.PUT("/tasks/:id", taskController.UpdateTaskHandler)
+    group.POST("/tasks", taskController.CreateTaskHandler)
+
+}
+
+func NewAdminRouter(timeout time.Duration, db mongo.Database, group *gin.RouterGroup) {
+    taskRepo := repository.NewTaskRepository(db, "task")
+    taskUsecase := usecases.NewTaskUsecase(taskRepo, timeout)
+    taskController := &controllers.TaskController{
+        TaskUsecase: taskUsecase,
+    }
+
+    userRepo := repository.NewUserRepository(db, "user")
+    userUsecase := usecases.NewUserUsecase(userRepo, timeout)
+    userController := &controllers.UserController{
+        UserUsecase: userUsecase,
+    }
+
+    group.GET("/tasks", taskController.GetAllTasksHandler)
+    group.DELETE("/tasks/:id", taskController.DeleteTaskHandler)
+    group.POST("/promote", userController.PromoteUser)
+}
+
+func SetUpRouter(timeout time.Duration, db mongo.Database) *gin.Engine {
+    r := gin.Default()
+
+    publicGroup := r.Group("/")
+    NewUserRouter(timeout, &db, publicGroup)
+
+    protectedGroup := r.Group("/")
+    protectedGroup.Use(middleware.AuthenticationMiddleware())
+    NewTaskRouter(timeout, db, protectedGroup)
+
+    adminGroup := r.Group("/")
+    adminGroup.Use(middleware.AuthenticationandAuthorizeMiddleware())
+    NewAdminRouter(timeout, db, adminGroup)
+
+    return r
 }

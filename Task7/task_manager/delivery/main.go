@@ -1,37 +1,48 @@
 package main
 
 import (
+	"context"
 	"log"
-	"task_manager/delivery/routers"
-	"task_manager/infrastructure"
-	"task_manager/repositories"
-	"task_manager/usecases"
+	"os"
+	"time"
 
-	"github.com/gin-gonic/gin"
+
+	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/EnyewAnberbir/task_manager/Task7/router"
 )
 
 func main() {
-
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://enyew:enyew@database.gl3phpg.mongodb.net/newtaskmanagement?retryWrites=true&w=majority&appName=database"))
+	err := godotenv.Load(".env")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Couldn't load .env file")
 	}
-	err = client.Connect(nil)
+
+	MongoURI := os.Getenv("db_mongo_uri")
+	DbMongoName := os.Getenv("db_mongo_name")
+	if MongoURI == "" || DbMongoName == "" {
+		log.Fatal("Couldn't find MongoDB URI or DbMongoName in .env")
+	}
+
+	clientOptions := options.Client().ApplyURI(MongoURI)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Couldn't create MongoDB client")
 	}
-	db := client.Database("task_manager_db")
+	err = client.Ping(ctx, nil)
+	if err != nil {
+		log.Fatalf("Failed to ping MongoDB: %v", err)
+	}
 
-	taskRepo := repositories.NewTaskRepository(db.Collection("tasks"))
-	userRepo := repositories.NewUserRepository(db.Collection("users"), infrastructure.NewPasswordService())
-	jwtService := infrastructure.NewJWTService("mySecretKey", "task_manager")
-	taskUseCase := usecases.NewTaskUseCase(taskRepo)
-	userUseCase := usecases.NewUserUseCase(userRepo)
+	r := routers.SetUpRouter(1000*time.Second, *client.Database(DbMongoName))
 
-
-	r := gin.Default()
-	routers.SetupRouter(r, taskUseCase, userUseCase, jwtService)
-	r.Run()
+	port := os.Getenv("PORT")
+	if port == "" {
+		log.Fatal("Port not Specified")
+	}
+	r.Run(":" + port)
 }
