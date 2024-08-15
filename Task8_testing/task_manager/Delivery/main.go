@@ -9,10 +9,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"Task7/task_manager/Delivery/controllers"
-	"Task7/task_manager/Delivery/router"
-	"Task7/task_manager/Repositories"
-	"Task7/task_manager/Usecases"
+	"Task8_testing/task_manager/Delivery/controllers"
+	"Task8_testing/task_manager/Delivery/router"
+	"Task8_testing/task_manager/Repositories"
+	"Task8_testing/task_manager/Usecases"
 )
 
 const (

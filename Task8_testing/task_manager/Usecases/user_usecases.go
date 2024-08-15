@@ -1,8 +1,8 @@
 package Usecases
 
 import (
-	"Task7/task_manager/Domain"
-	"Task7/task_manager/Repositories"
+	"Task8_testing/task_manager/Domain"
+	"Task8_testing/task_manager/Repositories"
 )
 
 type UserService struct {
