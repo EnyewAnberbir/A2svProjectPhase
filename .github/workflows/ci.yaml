@@ -31,5 +31,5 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd Tas8_testing/task_manager
+          cd Task8_testing/task_manager
           go mod tidy
